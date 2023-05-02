@@ -14,8 +14,10 @@ from requests_toolbelt import MultipartEncoder
 import jdatetime
 from bs4 import BeautifulSoup
 import mysql.connector
-
-
+import json
+f = open('./configs/ipAddress.json')
+data = json.load(f)
+ipAddress= data['ip']
 def convert_fa_numbers(input_str):
     """
     This function convert Persian numbers to English numbers.
@@ -299,7 +301,7 @@ def telegram_msg(msg , chat_id = '-1001654392363'):
               "chat-id" : chat_id,
               "message" : msg,
               "parse-mode" : "html"}
-    r = requests.post('http://159.223.11.86:8891/send-message', 
+    r = requests.post(f'http://{ipAddress}/send-message', 
                       headers = headers,
                       data=json.dumps(payload))
 

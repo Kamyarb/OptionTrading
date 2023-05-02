@@ -62,32 +62,5 @@ create_report(portfolio, non_option_portfolio, options)
 
 options = find_proper_symbols(options[~options['symbol_option'].isin(portfolio['symbol'])], monthly_trade_statistics)
 
-hard_o, soft_o = out_of_portfolio_config_generator(options, lookup)
-hard_p, soft_p = portfolio_config_generator(portfolio, lookup)
 
-if len(os.listdir('./previous_configs/')) > 0:
-    new_hard_o = drop_duplicate_configs(hard_o, './previous_configs/hard_o.csv')
-    new_hard_p = drop_duplicate_configs(hard_p, './previous_configs/hard_p.csv')
-    new_soft_p = drop_duplicate_configs(soft_p, './previous_configs/soft_p.csv')
-else:
-    new_hard_o = hard_o.copy()
-    new_hard_p = hard_p.copy()
-    new_soft_p = soft_p.copy()
-
-NUM_OF_COLS = -1
-if new_hard_o.shape[0] > 0:
-    excel_writer(new_hard_o ,name='hard_o', num_of_cols=NUM_OF_COLS)
-
-if new_hard_p.shape[0] > 0:
-    excel_writer(new_hard_p ,name='hard_p', num_of_cols=NUM_OF_COLS)
-
-if new_soft_p.shape[0] > 0:
-    excel_writer(new_soft_p ,name='soft_p', num_of_cols=NUM_OF_COLS)
-#%%
-if len(os.listdir('./previous_configs/')) == 0:
-    create_instances('./configs/')
-
-hard_o.to_csv('./previous_configs/hard_o.csv', index=False)
-hard_p.to_csv('./previous_configs/hard_p.csv', index=False)
-soft_p.to_csv('./previous_configs/soft_p.csv', index=False)
 # %%
