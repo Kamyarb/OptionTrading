@@ -294,7 +294,9 @@ def fetch_real_time_last_snapshot():
             i+=1
     return options_snapshot, market_snapshot
 
-
+# def option_details(option_id):
+    
+    
 def telegram_msg(msg , chat_id = '-1001654392363'):
     headers = {'Content-type': 'application/json'}
     payload = {"bot-name" : "hermes" , 
