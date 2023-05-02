@@ -319,7 +319,53 @@ from scipy.stats import norm
 N_prime = norm.pdf
 N = norm.cdf
 
-
+class BlackScholes:
+    """ 
+    Class to calculate (European) call and put option prices through the Black-Scholes formula 
+    without dividends
+    
+    :param S: Price of underlying stock
+    :param K: Strike price
+    :param T: Time till expiration (in years)
+    :param r: Risk-free interest rate (0.05 indicates 5%)
+    :param sigma: Volatility (standard deviation) of stock (0.15 indicates 15%)
+    """
+    @staticmethod
+    def _d1(S, K, T, r, sigma):
+        return (1 / (sigma * np.sqrt(T))) * (np.log(S/K) + (r + sigma**2 / 2) * T)
+    
+    def _d2(self, S, K, T, r, sigma):
+        return self._d1(S, K, T, r, sigma) - sigma * np.sqrt(T)
+    
+    def call_price(self, S, K, T, r, sigma):
+        """ Main method for calculating price of a call option """
+        d1 = self._d1(S, K, T, r, sigma)
+        d2 = self._d2(S, K, T, r, sigma)
+        return norm.cdf(d1) * S - norm.cdf(d2) * K * np.exp(-r*T)
+    
+    def put_price(self, S, K, T, r, sigma):
+        """ Main method for calculating price of a put option """
+        d1 = self._d1(S, K, T, r, sigma)
+        d2 = self._d2(S, K, T, r, sigma)
+        return norm.cdf(-d2) * K * np.exp(-r*T) - norm.cdf(-d1) * S
+    
+    def call_in_the_money(self, S, K, T, r, sigma):
+        """ 
+        Calculate probability that call option will be in the money at
+        maturity according to Black-Scholes.
+        """
+        d2 = self._d2(S, K, T, r, sigma)
+        return norm.cdf(d2)
+    
+    def put_in_the_money(self, S, K, T, r, sigma):
+        """ 
+        Calculate probability that put option will be in the money at
+        maturity according to Black-Scholes.
+        """
+        d2 = self._d2(S, K, T, r, sigma)
+        return 1 - norm.cdf(d2)
+    
+    
 def black_scholes_call(S, K, T, r, sigma):
     '''
 
@@ -392,3 +438,92 @@ def implied_volatility_call(C, S, K, T, r, tol=0.0001,
         sigma = sigma - diff / vega(S, K, T, r, sigma)
 
     return sigma
+
+
+
+class OptionStrategies:
+    @staticmethod
+    def short_straddle(S, K, T, r, sigma):
+        call = BlackScholes().call_price(S, K, T, r, sigma)
+        put = BlackScholes().put_price(S, K, T, r, sigma)
+        return - put - call
+    
+    @staticmethod
+    def long_straddle(S, K, T, r, sigma):
+        call = BlackScholes().call_price(S, K, T, r, sigma)
+        put = BlackScholes().put_price(S, K, T, r, sigma)
+        return put + call
+    
+    @staticmethod
+    def short_strangle(S, K1, K2, T, r, sigma):
+        assert K1 < K2, f"Please make sure that K1 < K2. Now K1={K1}, K2={K2}"
+        put = BlackScholes().put_price(S, K1, T, r, sigma)
+        call = BlackScholes().call_price(S, K2, T, r, sigma)
+        return - put - call
+    
+    @staticmethod
+    def long_strangle(S, K1, K2, T, r, sigma):
+        assert K1 < K2, f"Please make sure that K1 < K2. Now K1={K1}, K2={K2}"
+        put = BlackScholes().put_price(S, K1, T, r, sigma)
+        call = BlackScholes().call_price(S, K2, T, r, sigma)
+        return put + call
+    
+    @staticmethod
+    def short_put_butterfly(S, K1, K2, K3, T, r, sigma):
+        assert K1 < K2 < K3, f"Please make sure that K1 < K2 < K3. Now K1={K1}, K2={K2}, K3={K3}"
+        put1 = BlackScholes().put_price(S, K1, T, r, sigma)
+        put2 = BlackScholes().put_price(S, K2, T, r, sigma)
+        put3 = BlackScholes().put_price(S, K3, T, r, sigma)
+        return - put1 + 2 * put2 - put3
+    
+    @staticmethod
+    def long_call_butterfly(S, K1, K2, K3, T, r, sigma):
+        assert K1 < K2 < K3, f"Please make sure that K1 < K2 < K3. Now K1={K1}, K2={K2}, K3={K3}"
+        call1 = BlackScholes().call_price(S, K1, T, r, sigma)
+        call2 = BlackScholes().call_price(S, K2, T, r, sigma)
+        call3 = BlackScholes().call_price(S, K3, T, r, sigma)
+        return call1 - 2 * call2 + call3
+    
+    @staticmethod
+    def short_iron_condor(S, K1, K2, K3, K4, T, r, sigma):
+        assert K1 < K2 < K3 < K4, f"Please make sure that K1 < K2 < K3 < K4. Now K1={K1}, K2={K2}, K3={K3}, K4={K4}"
+        put1 = BlackScholes().put_price(S, K1, T, r, sigma)
+        put2 = BlackScholes().put_price(S, K2, T, r, sigma)
+        call1 = BlackScholes().call_price(S, K3, T, r, sigma)
+        call2 = BlackScholes().call_price(S, K4, T, r, sigma)
+        return put1 - put2 - call1 + call2
+    
+    @staticmethod
+    def long_iron_condor(S, K1, K2, K3, K4, T, r, sigma):
+        assert K1 < K2 < K3 < K4, f"Please make sure that K1 < K2 < K3 < K4. Now K1={K1}, K2={K2}, K3={K3}, K4={K4}"
+        put1 = BlackScholes().put_price(S, K1, T, r, sigma)
+        put2 = BlackScholes().put_price(S, K2, T, r, sigma)
+        call1 = BlackScholes().call_price(S, K3, T, r, sigma)
+        call2 = BlackScholes().call_price(S, K4, T, r, sigma)
+
+        return - put1 + put2 + call1 - call2
+    
+    
+    
+def call_implied_volatility(price, S, K, T, r):
+    """ Calculate implied volatility of a call option up to 2 decimals of precision. """
+    sigma = 0.0001
+    while sigma < 1:
+        d1 = BlackScholes()._d1(S, K, T, r, sigma)
+        d2 = BlackScholes()._d2(S, K, T, r, sigma)
+        price_implied = S * norm.cdf(d1) - K * np.exp(-r*T) * norm.cdf(d2)
+        if price - price_implied < 0.0001:
+            return sigma
+        sigma += 0.0001
+    return "Not Found"
+
+def put_implied_volatility(price, S, K, T, r):
+    """ Calculate implied volatility of a put option up to 2 decimals of precision. """
+    sigma = 0.0001
+    while sigma < 1:
+        call = BlackScholes().call_price(S, K, T, r, sigma)
+        price_implied = K * np.exp(-r*T) - S + call
+        if price - price_implied < 0.0001:
+            return sigma
+        sigma += 0.0001
+    return "Not Found"
