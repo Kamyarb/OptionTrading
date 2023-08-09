@@ -127,7 +127,7 @@ def _multiple_replace(mapping, text):
 def Market_with_askbid_option():
     count = 0 
     while count<5:
-        url = 'http://www.tsetmc.com/tsev2/data/MarketWatchPlus.aspx?h=0&r=0'
+        url = 'http://old.tsetmc.com/tsev2/data/MarketWatchInit.aspx?h=0&r=0'
         data = requests.get(url, timeout=12)
         content = data.content.decode('utf-8')
         parts = content.split('@')
@@ -212,13 +212,14 @@ def Market_with_askbid_option():
     df['symbol'] = df['symbol'].map(lambda x: x.replace(' ' , '_'))
 
     options = df[df['name'].str.startswith('اختيارخ')].reset_index(drop=True).copy()
-    option_informations = pd.DataFrame(list(options['name'].apply(extract_due_indormations)))
+    option_informations = pd.DataFrame(list(options['name'].apply(extract_due_informations)))
     options = pd.concat([options, option_informations], axis=1)
     options['base_symbol'] = options['base_symbol'].replace({'ص.دارا':'دارا_یکم', 'حافرین':'حآفرین', 'های':'های_وب'})
     options = options.merge(df[['last_trade', 'symbol', 'id', 'isin','min_allowed_price']], right_on='symbol',
                             left_on='base_symbol', suffixes=['_option', '_base'], how='left')                                
 
     df = df[~df['id'].isin(options['id_option'])]
+    df['name'] = df['name'].apply(lambda x : convert_ar_characters(x))
     return options.reset_index(drop=True), df.reset_index(drop=True)
 
 
@@ -254,7 +255,7 @@ def extract_call_options_features(options):
     
     return options.reset_index(drop=True)
 
-def extract_due_indormations(name):
+def extract_due_informations(name):
     name = name.split('-')
     due_date_price = int(name[1])
     base_symbol = convert_ar_characters(name[0].split(' ')[1]).replace(' ' , '_')
@@ -305,7 +306,7 @@ def telegram_msg(msg , chat_id = '-1001654392363'):
               "parse-mode" : "html"}
     r = requests.post(f'http://{ipAddress}/send-message', 
                       headers = headers,
-                      data=json.dumps(payload))
+                      data=json.dumps(payload), timeout=10)
 
     if r.status_code != 200:
         print('------------------------')
