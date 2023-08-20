@@ -15,9 +15,11 @@ import jdatetime
 from bs4 import BeautifulSoup
 import mysql.connector
 import json
-f = open('./configs/ipAddress.json')
+
+f = open('~/configs/ipAddress.json')
 data = json.load(f)
 ipAddress= data['ip']
+
 def convert_fa_numbers(input_str):
     """
     This function convert Persian numbers to English numbers.
