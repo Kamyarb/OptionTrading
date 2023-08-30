@@ -61,7 +61,9 @@ def convert_ar_characters(input_str):
         'ي': 'ی',
         
     }
-    return _multiple_replace(mapping, input_str)
+    pattern = "|".join(map(re.escape, mapping.keys()))
+    
+    return re.sub(pattern, lambda m: mapping[m.group()], str(text))
 
 def convert_ar_numbers(input_str):
     """
@@ -117,12 +119,7 @@ def readable(n):
     return convert_en_numbers(human_readable)
 
 def _multiple_replace(mapping, text):
-    """
-    Internal function for replace all mapping keys for a input string
-    :param mapping: replacing mapping keys
-    :param text: user input string
-    :return: New string with converted mapping keys to values
-    """
+
     pattern = "|".join(map(re.escape, mapping.keys()))
     return re.sub(pattern, lambda m: mapping[m.group()], str(text))
 
